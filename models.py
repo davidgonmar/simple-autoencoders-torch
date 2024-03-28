@@ -6,7 +6,7 @@ import functools
 class FFEncoder(nn.Module):
     def __init__(self, input_size: Tuple[int], latent_dims: int):
         super(FFEncoder, self).__init__()
-        total_size = functools.reduce(lambda x, y: x * y, input_size, initial=1)
+        total_size = functools.reduce(lambda x, y: x * y, input_size)
         self.layers = nn.Sequential(
             nn.Flatten(start_dim=1, end_dim=-1), # Flattens from (B, C, H, W) to (B, C*H*W)
             nn.Linear(total_size, 512),
@@ -22,14 +22,14 @@ class FFEncoder(nn.Module):
 class FFDecoder(nn.Module):
     def __init__(self, output_size: Tuple[int], latent_dims: int):
         super(FFDecoder, self).__init__()
-        total_size = functools.reduce(lambda x, y: x * y, output_size, initial=1)
+        total_size = functools.reduce(lambda x, y: x * y, output_size)
         self.layers = nn.Sequential(
             nn.Linear(latent_dims, 256),
             nn.ReLU(),
             nn.Linear(256, 512),
             nn.ReLU(),
             nn.Linear(512, total_size),
-            nn.Reshape(-1, *output_size) # Reshapes from (B, C*H*W) to (B, C, H, W)
+            nn.Unflatten(dim=1, unflattened_size=output_size) # Unflattens from (B, C*H*W) to (B, C, H, W)
         )
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
